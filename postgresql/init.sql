@@ -101,7 +101,7 @@ create view
       select 
       ss.supersector_name as "sectorName",
       a.date,
-      round(b.production_employees / (a.all_employees - b.production_employees)  * 100.00) as rate
+      round(b.production_employees / (a.all_employees - b.production_employees)) as rate
       from all_employees_data a
       left join production_employees_data b
       on a.category = b.category and a.date = b.date

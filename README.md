@@ -10,13 +10,13 @@ The BLS Data REST API project facilitates easy access to BLS data through a REST
 
 - **Data Ingestion**: Automates the process of ingesting data from external sources into a PostgreSQL database.
 - **Data Transformation**: Cleans and transforms raw data to prepare it for API consumption.
-- **API Integration**: A RESTful API for accessing BLS data, based on PostgREST API, that provides endpoints for querying data about "Women in goverment" or ratio "production employees / supervisory employees" 
-during time
+- **API Integration**: A RESTful API for accessing BLS data, based on PostgREST API, that provides endpoints for querying data about "Women in government" or the ratio "production employees / supervisory employees" during different time periods.
 - **Containerized Deployment**: Utilizes Docker containers for easy deployment and scaling.
 
 ### Limitation
 
-- Due to the nature of the source, the BLS prohibites automated processes that makes requests to their data. It pushed us to move from an automated approach to use downloaded local files instead, at the `data/` folder.
+- Due to the nature of the source, the BLS prohibits automated processes that make requests to their data. This limitation prompted us to move from an automated approach to using downloaded local files instead, stored in the `data/` folder.
+- Additionally, due to the size of these files and the limitations on the size of files a repository can have (over 100 MB), we encourage users to download the required file `ce.data.0.AllCESSeries` from <https://download.bls.gov/pub/time.series/ce/> and replace it locally.
 
 ## Requirements
 
@@ -25,25 +25,25 @@ during time
 
 ## Installation
 
-1. Start the local environment using pipenv command from CLI:
+1. Start the local environment using pipenv command from the command line interface (CLI):
 
    ```bash
    pipenv shell
 
-This command will create a virtual environment and grab all the dependencies from the Pipfile.lock file.
+This command will create a virtual environment and install all the required dependencies from the Pipfile.lock file.
 
 2. Update your .env file, if needed
 
 
 ## Usage
 
-The way to implement this is straight forward. There're three files:
+The usage of this project is straightforward and is handled by three main scripts:
 
 - `run.sh`
 - `test_api.sh`
 - `clean.sh`
 
-Each of them handles the most important steps on the project: setup, test and remove any resource. Let's move on!
+These scripts automate the most important steps of the project: setup, testing, and removal of resources. Let's proceed with the details:
 
 1. Start the project using the `run.sh` script:
 
@@ -51,21 +51,19 @@ Each of them handles the most important steps on the project: setup, test and re
    ./run.sh
    ```
 
-This files creates the resources for your own local Postgresql database with Docker, without worring about version issues or compatibility, by creating all the tables, schemas, views, roles and users that will be needed for the PostgREST API usage.
+This script creates the necessary resources for your local PostgreSQL database using Docker, ensuring compatibility and version consistency. It sets up tables, schemas, views, roles, and users required for the PostgREST API usage.
 
-And, of course, it handles the PostgREST API implementation, without worring about any instalation on your machine.
+Additionally, the script handles the implementation of the PostgREST API, eliminating the need for manual installation on your machine. After setting up the resources, it executes either `utils/data_ingestion_batch.py` or `utils/data_ingestion_stream.py` depending of its content.
 
-After all those resources are created, it runs the `utils/data_ingestion_batch.py` or `utils/data_ingestion_stream.py` depending of the content of it.
+As of now, `utils/data_ingestion_batch.py` is executed, which ingests data in "mini" batches of *3000* rows to avoid potential memory issues. If you prefer the streaming approach, i.e., ingesting row by row, you can modify `run.sh` accordingly before running it (instructions provided in the script).
 
-As of now, the first one is the one to be executed, it ingest the data in "mini" batches of `3000` rows so we won't face any potential memory issue, but, if you want to follow the stream approach i.e. ingesting row by row, go and modify the `run.sh` before running it (instructions on it explaining this!).
-
-2. After the previous step, we will have data available and the PostgREST API too, so, we can start making call to it by running `test_api.sh` script:
+2. Once the data and the PostgREST API are available, you can test the API by running the `test_api.sh` script:
 
    ```console
    ./test_api.sh
     ```
 
-The script will trigger the `utils/data_api_connect.py` that connects to the port `3000` at localhost, to make the GET request to the API and, you will see the following output on the console:
+This script triggers the `utils/data_api_connect.py` which connects to port `3000` on localhost to make a GET request to the API. You will see the following output on the console:
 
         ...
         INFO:root:Sending GET request to endpoint: /women_in_goverment_v1
@@ -77,17 +75,17 @@ The script will trigger the `utils/data_api_connect.py` that connects to the por
         ...
         {"date":"January 2024","valueInThousands":13493}]
 
-** Alternative usage for individual API calls could be, directly into your CLI like this:
+** Alternatively, individual API calls can be made directly from the command line interface using:
 
         curl localhost:3000/women_in_goverment_v1
 
-3. And finally, to clean and remove all the resources used for the project, we will run:
+3. Finally, to clean and remove all the resources used by the project, execute:
 
    ```console
    ./clean.sh
     ```
 
-This will remove volumes, containers and images created for the db + API implementation.
+This script removes volumes, containers and images created for the database and API implementation.
 
 ### Endpoints
 
@@ -97,17 +95,30 @@ We have 3 endpoints implemented:
 2. `women_in_goverment_v2`
 3. `ratio_production_supervisory`
 
-The first one, `women_in_goverment_v1`, uses the data that came from the `ce.data.0.AllCESSeries.txt` file. It was ingested in the `public.all_ces` and a view at the `api_call` schema, called `women_in_goverment_v1` was created. This view filters some `series_id` data that references the "women" on it.
+1. `women_in_goverment_v1`
 
-The second one, `women_in_goverment_v2`, uses the data that came from the `ce.data.90a.Government.Employment.txt` file. It was ingested in the `public.ce_government` and a view at the `api_call` schema, called `women_in_goverment_v2` was created. This view filters some `series_id` data that references the "women" on it. This data is a subset of the data in `public.all_ces` that, for higher volumes, could be a suitable option to grab the data instead.
+- This endpoint utilizes data from the `ce.data.0.AllCESSeries.txt` file, which was ingested into the `public.all_ces` table.
+- A view named `women_in_goverment_v1` was created under the `api_call` schema. This view filters data based on specific `series_id` references related to women.
 
-The third one, `ratio_production_supervisory`, uses the data that came from the `ce.data.0.AllCESSeries.txt` file and `ce.supersector.txt` file. The supersector was ingested in the `public.ce_supersector` and a view at the `api_call` schema, called `ratio_production_supervisory` was created. This view filters the data from the `public.all_ces` by grabbing the `all_employees` records and the `production_and_non_supervisory_employees` records to calculate the ratio. Plus, we grab the `supersector_code` from the `series_id` to match them with the `public.ce_supersector` to output the supersector name.
+2. `women_in_goverment_v2`
+
+- Data for this endpoint is sourced from the `ce.data.90a.Government.Employment.txt` file, ingested into the `public.ce_government` table.
+- Similar to the first endpoint, a view named `women_in_goverment_v2` under the `api_call` schema was created. It filters data based on specific `series_id` references related to women. This dataset is a subset of the data in `public.all_ces` and may be preferable for larger volumes of data.
+
+3. `ratio_production_supervisory`
+
+- This endpoint utilizes data from the `ce.data.0.AllCESSeries.txt` and `ce.supersector.txt` files.
+- Data from the `ce.supersector.txt` file was ingested into the public.ce_supersector table.
+- A view named `ratio_production_supervisory` under the `api_call` schema was created. This view filters data from `public.all_ces` to calculate the ratio between `all_employees` and `production_and_non_supervisory_employees`. Additionally, it matches `supersector_code` from the `series_id` with data in `public.ce_supersector` to provide the supersector name.
 
 ## Adding New Endpoints
 
-To add new endpoints, you can connect to your local database and create any view needed or, if you want to recreate them from scratch, just add it to the `postgresql/init.sql` before running the `run.sh` file and verify the correct permissions for the `PostgREST API` role and user on those new views.
+To introduce new endpoints:
+1. Connect to your local database and create any necessary views.
+2. If starting from scratch, add the required views to `postgresql/init.sql` before executing the `run.sh` script.
+3. Ensure that the `PostgREST API` role and user have appropriate permissions on the newly created views.
 
-Feel free to customize the instructions based on your specific project structure and requirements.
+Feel free to customize these instructions based on your project's specific structure and requirements.
 
 ## Project Status
 
