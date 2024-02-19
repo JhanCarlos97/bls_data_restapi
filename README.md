@@ -16,7 +16,7 @@ The BLS Data REST API project facilitates easy access to BLS data through a REST
 ### Limitation
 
 - Due to the nature of the source, the BLS prohibits automated processes that make requests to their data. This limitation prompted us to move from an automated approach to using downloaded local files instead, stored in the `data/` folder.
-- Additionally, due to the size of these files and the limitations on the size of files a repository can have (over 100 MB), we encourage users to download the required file `ce.data.0.AllCESSeries` from <https://download.bls.gov/pub/time.series/ce/> and replace it locally.
+- Additionally, due to the size of these files and the limitations on the size of files a repository can have (over 100 MB), we encourage users to download the required file `ce.data.0.AllCESSeries` from <https://download.bls.gov/pub/time.series/ce/> and replace it locally, just in the case you are grabbing the project from the remote repo.
 
 ## Requirements
 
